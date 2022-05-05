@@ -4,23 +4,24 @@ using System.Threading;
 
 namespace TimingWheel
 {
-    public class TimingWheel : IWheel
+    public class TimingWheel
     {
-        public int Year { get; set; }
-        public int Month => YearWheel.Month;
-        public int Day => MonthWheel.Day;
-        public int Hour => DayWheel.Hour;
-        public int Minute => HourWheel.Minute;
-        public int Second => MinuteWheel.Second;
+        public int Year => YearWheel.Year;
+        public int Month => MonthWheel.Month;
+        public int Day => DayWheel.Day;
+        public int Hour => HourWheel.Hour;
+        public int Minute => MinuteWheel.Minute;
+        public int Second => SecondWheel.Second;
+
 
         internal YearWheel YearWheel { get; }
         internal MonthWheel MonthWheel { get; }
         internal DayWheel DayWheel { get; }
         internal HourWheel HourWheel { get; }
         internal MinuteWheel MinuteWheel { get; }
+        internal SecondWheel SecondWheel { get; }
 
         private Thread _workerThread;
-        private List<IJob> _yearJobList = new List<IJob>();
 
         public TimingWheel() : this(DateTime.Now)
         {
@@ -29,12 +30,12 @@ namespace TimingWheel
 
         public TimingWheel(DateTime time, bool autoStart = false)
         {
-            Year = time.Year;
-            YearWheel = new YearWheel(this, time.Month);
-            MonthWheel = new MonthWheel(this, time.Day, DateTime.DaysInMonth(Year, Month));
-            DayWheel = new DayWheel(this, time.Hour);
-            HourWheel = new HourWheel(this, time.Minute);
-            MinuteWheel = new MinuteWheel(this, time.Second);
+            YearWheel = new YearWheel(this, time.Year);
+            MonthWheel = new MonthWheel(this, time.Month);
+            DayWheel = new DayWheel(this, time.Day, DateTime.DaysInMonth(Year, Month));
+            HourWheel = new HourWheel(this, time.Hour);
+            MinuteWheel = new MinuteWheel(this, time.Minute);
+            SecondWheel = new SecondWheel(this, time.Second);
 
             if (autoStart)
             {
@@ -57,30 +58,27 @@ namespace TimingWheel
         {
             if (job.Year > Year)
             {
-                lock (_yearJobList)
-                {
-                    _yearJobList.Add(job);
-                }
+                YearWheel.RegisterJob(job);
             }
             else if (job.Month > Month)
             {
-                YearWheel.RegisterJob(job);
+                MonthWheel.RegisterJob(job);
             }
             else if (job.Day > Day)
             {
-                MonthWheel.RegisterJob(job);
+                DayWheel.RegisterJob(job);
             }
             else if (job.Hour > Hour)
             {
-                DayWheel.RegisterJob(job);
+                HourWheel.RegisterJob(job);
             }
             else if (job.Minute > Minute)
             {
-                HourWheel.RegisterJob(job);
+                MinuteWheel.RegisterJob(job);
             }
             else if (job.Second > Second)
             {
-                MinuteWheel.RegisterJob(job);
+                SecondWheel.RegisterJob(job);
             }
             else
             {
@@ -99,40 +97,8 @@ namespace TimingWheel
             while (true)
             {
                 Thread.Sleep(1000);
-                MinuteWheel.MoveNext();
+                SecondWheel.MoveNext();
                 Console.WriteLine($"{Year}/{Month:00}/{Day:00} {Hour:00}:{Minute:00}:{Second:00}");
-            }
-        }
-
-        public void MoveNext()
-        {
-            Year += 1;
-            OnMoveNext(Year);
-        }
-
-        private void OnMoveNext(int year)
-        {
-            if (_yearJobList == null || _yearJobList.Count == 0)
-            {
-                return;
-            }
-
-            lock (_yearJobList)
-            {
-                for (int i = _yearJobList.Count - 1; i >= 0; i--)
-                {
-                    var job = _yearJobList[i];
-                    if (job.Year == year)
-                    {
-                        _yearJobList.RemoveAt(i);
-                        YearWheel.RegisterJob(job);
-                    }
-                    else if (job.Year < year)
-                    {
-                        _yearJobList.RemoveAt(i);
-                        job.Execute();
-                    }
-                }
             }
         }
     }

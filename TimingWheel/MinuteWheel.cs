@@ -2,11 +2,12 @@
 {
     internal class MinuteWheel : Wheel
     {
-        public int Second => currentIndex;
+        public int Minute => currentIndex;
 
         protected override IWheel ParentWheel => TimingWheel.HourWheel;
+        protected override IWheel ChildWheel => TimingWheel.SecondWheel;
 
-        public MinuteWheel(TimingWheel timingWheel, int second) : base(timingWheel, 60, 59, second)
+        public MinuteWheel(TimingWheel timingWheel, int minute) : base(timingWheel, 60, 59, minute)
         {
 
         }
@@ -15,8 +16,7 @@
         {
             if (job == null)
                 return;
-
-            RegisterJob(job.Second, job);
+            RegisterJob(job.Minute, job);
         }
     }
 }

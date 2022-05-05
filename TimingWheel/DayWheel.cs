@@ -1,13 +1,15 @@
-﻿namespace TimingWheel
+﻿using System;
+
+namespace TimingWheel
 {
     internal class DayWheel : Wheel
     {
-        public int Hour => currentIndex;
+        public int Day => currentIndex + 1;
 
         protected override IWheel ParentWheel => TimingWheel.MonthWheel;
         protected override IWheel ChildWheel => TimingWheel.HourWheel;
 
-        public DayWheel(TimingWheel timingWheel, int hour) : base(timingWheel, 24, 23, hour)
+        public DayWheel(TimingWheel timingWheel, int day, int daysInMonth) : base(timingWheel, 31, daysInMonth - 1, day - 1)
         {
 
         }
@@ -16,7 +18,13 @@
         {
             if (job == null)
                 return;
-            RegisterJob(job.Hour, job);
+            RegisterJob(job.Day - 1, job);
+        }
+
+        protected override void OnMoveNext(int index)
+        {
+            maxIndex = DateTime.DaysInMonth(TimingWheel.Year, TimingWheel.Month);
+            base.OnMoveNext(index);
         }
     }
 }
