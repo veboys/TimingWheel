@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace TimingWheel
 {
@@ -26,6 +27,7 @@ namespace TimingWheel
             var node = FindYearNode(Year);
             if (node != null && ChildWheel != null)
             {
+                Console.WriteLine($"{GetType().Name} move jobs to {ChildWheel.GetType().Name}");
                 ChildWheel.RegisterJobs(node.Value.Jobs);
             }
         }
